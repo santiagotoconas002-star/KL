@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para KL   </title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #3a0ca322 0%, #2b0916 45%, #0d0206 100%);
+            background-color: #14040a;
+            color: #fff0f3;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Luz ambiental animada de fondo */
+        .luz-fondo {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 77, 109, 0.22) 0%, rgba(255, 77, 109, 0) 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: respirarLuz 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes respirarLuz {
+            0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+        }
+
+        #canvas-particulas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Control estricto de pantallas: solo la activa existe visualmente */
+        .pantalla {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+            padding: 24px;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        .pantalla.activa {
+            display: flex;
+            animation: entrarPantalla 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .pantalla.saliendo {
+            animation: salirPantalla 0.45s ease forwards;
+        }
+
+        @keyframes entrarPantalla {
+            from { opacity: 0; transform: translateY(25px) scale(0.95); filter: blur(8px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes salirPantalla {
+            from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+            to { opacity: 0; transform: translateY(-25px) scale(0.95); filter: blur(8px); }
+        }
+
+        /* Tarjetas estilo cristal elegante (Glassmorphism) */
+        .glass-card {
+            background: rgba(25, 8, 15, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 143, 163, 0.3);
+            border-radius: 30px;
+            padding: 50px 42px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65), inset 0 0 30px rgba(255, 77, 109, 0.1);
+            text-align: center;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Brillo sutil en el borde superior de la tarjeta */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15%;
+            width: 70%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff758f, #fff0f3, #ff758f, transparent);
+        }
+
+        /* ================= PORTADA ================= */
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 50px;
+            background: rgba(255, 77, 109, 0.15);
+            border: 1px solid rgba(255, 117, 143, 0.45);
+            color: #ff8fa3;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            animation: flotarSuave 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes flotarSuave {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        .portada-card h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 25px rgba(255, 117, 143, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: #ffb3c6;
+            font-size: 0.98rem;
+            opacity: 0.85;
+            margin-bottom: 36px;
+        }
+
+        .botones-portada {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 36px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: none;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-si {
+            background: linear-gradient(135deg, #ff4d6d 0%, #c9184a 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 77, 109, 0.4);
+        }
+
+        .btn-si:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 15px 35px rgba(255, 77, 109, 0.65);
+        }
+
+        .btn-no {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffb3c6;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .btn-no:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: white;
+        }
+
+        /* ================= CARTA ================= */
+        .carta-card {
+            max-width: 680px;
+            text-align: left;
+            padding: 46px 44px;
+        }
+
+        .carta-header {
+            border-bottom: 1px solid rgba(255, 143, 163, 0.2);
+            padding-bottom: 16px;
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .carta-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 2.8rem;
+            color: #ff8fa3;
+        }
+
+        .fecha {
+            font-size: 0.75rem;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #ffb3c6;
+            background: rgba(255, 77, 109, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 77, 109, 0.3);
+        }
+
+        .ascii-kami {
+            font-family: monospace;
+            font-size: 0.72rem;
+            line-height: 1.15;
+            color: #ff758f;
+            text-shadow: 0 0 12px rgba(255, 77, 109, 0.75);
+            margin-bottom: 24px;
+            text-align: center;
+            animation: pulsoBrillo 2.5s infinite alternate;
+        }
+
+        @keyframes pulsoBrillo {
+            from { text-shadow: 0 0 8px rgba(255, 77, 109, 0.4); opacity: 0.85; }
+            to { text-shadow: 0 0 18px rgba(255, 143, 163, 0.95); opacity: 1; }
+        }
+
+        .texto-carta p {
+            font-size: 1.02rem;
+            line-height: 1.85;
+            color: #ffe5ec;
+            margin-bottom: 18px;
+            font-weight: 300;
+            opacity: 0;
+            animation: aparecerParrafo 0.9s ease forwards;
+        }
+
+        .texto-carta p:nth-child(1) { animation-delay: 0.3s; }
+        .texto-carta p:nth-child(2) { animation-delay: 0.8s; }
+        .texto-carta p:nth-child(3) { animation-delay: 1.3s; }
+
+        @keyframes aparecerParrafo {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .firma {
+            margin-top: 26px;
+            text-align: right;
+            font-style: italic;
+            color: #ffb3c6 !important;
+        }
+
+        .firma span {
+            display: block;
+            margin-top: 4px;
+            color: #ff758f;
+            font-weight: 600;
+            font-style: normal;
+            font-size: 1.08rem;
+        }
+
+        .btn-siguiente {
+            display: block;
+            margin: 30px auto 0 auto;
+            width: 100%;
+            max-width: 230px;
+            opacity: 0;
+            animation: aparecerParrafo 0.9s ease 1.7s forwards;
+        }
+
+        /* ================= FINAL: LIRIOS Y MENSAJE ================= */
+        #pantalla-final {
+            justify-content: space-between;
+            padding-top: 7vh;
+            padding-bottom: 0;
+            overflow: hidden;
+        }
+
+        .mensaje-final-box {
+            text-align: center;
+            z-index: 5;
+            padding: 0 15px;
+        }
+
+        .eyebrow {
+            font-size: 0.85rem;
+            letter-spacing: 5px;
+            color: #ff8fa3;
+            margin-bottom: 14px;
+            font-weight: 600;
+            opacity: 0;
+            animation: aparecerParrafo 1s ease 0.2s forwards;
+        }
+
+        .titulo-gigante {
+            font-size: clamp(1.9rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            opacity: 0;
+            animation: aparecerParrafo 1.1s ease 0.5s forwards;
+        }
+
+        .titulo-gigante .destacado {
+            display: block;
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: clamp(3.4rem, 8.5vw, 6.5rem);
+            background: linear-gradient(90deg, #fff0f3, #ff4d6d, #ffb3c6, #ff4d6d);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 28px rgba(255, 77, 109, 0.55));
+            margin-top: 4px;
+            animation: brilloTexto 4s linear infinite;
+        }
+
+        @keyframes brilloTexto {
+            to { background-position: 200% center; }
+        }
+
+        .lirios-container {
+            width: 100%;
+            max-width: 480px;
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Resplandor detrás de los lirios */
+        .lirios-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 320px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(255, 117, 143, 0.35) 0%, transparent 70%);
+            z-index: -1;
+            animation: respirarLuz 4s ease-in-out infinite alternate;
+        }
+
+        .lirios-art {
+            width: 100%;
+            height: auto;
+            transform-origin: bottom center;
+            animation: crecerPlanta 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards, mecerPlanta 4.5s ease-in-out 2.2s infinite alternate;
+        }
+
+        .campana {
+            transform-origin: top center;
+            animation: balanceoCampana 2.8s ease-in-out infinite alternate;
+        }
+        .c1 { animation-delay: 0.1s; }
+        .c2 { animation-delay: 0.5s; }
+        .c3 { animation-delay: 0.9s; }
+        .c4 { animation-delay: 1.3s; }
+
+        @keyframes crecerPlanta {
+            from { transform: scaleY(0.05) translateY(60px); opacity: 0; }
+            to { transform: scaleY(1) translateY(0); opacity: 1; }
+        }
+
+        @keyframes mecerPlanta {
+            from { transform: rotate(-2deg); }
+            to { transform: rotate(2deg); }
+        }
+
+        @keyframes balanceoCampana {
+            from { transform: rotate(-4deg); }
+            to { transform: rotate(4deg); }
+        }
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 36px 24px; }
+            .portada-card h1 { font-size: 3.4rem; }
+            .carta-card { padding: 30px 22px; }
+            .ascii-kami { font-size: 0.55rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="luz-fondo"></div>
+    <canvas id="canvas-particulas"></canvas>
+
+    <!-- PASO 1: PORTADA CON PÉTALOS DE ROSA -->
+    <section id="pantalla-portada" class="pantalla activa">
+        <div class="glass-card portada-card">
+            <span class="badge">Acceso exclusivo</span>
+            <h1>¿Sos KL?</h1>
+            <p class="subtitulo">Solo una persona tiene permiso para abrir esto.</p>
+            <div class="botones-portada">
+                <button class="btn btn-si" onclick="cambiarPantalla('pantalla-carta')">Sí, soy yo</button>
+                <button class="btn btn-no" onclick="cerrarPagina()">No</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PANTALLA SI DICE QUE NO -->
+    <section id="pantalla-bloqueada" class="pantalla">
+        <div class="glass-card">
+            <span class="badge">Restringido</span>
+            <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; margin-bottom: 10px;">Esta página no es para vos</h2>
+            <p class="subtitulo" style="margin-bottom: 0;">Ya podés cerrar esta pestaña.</p>
+        </div>
+    </section>
+
+    <!-- PASO 2: TU CARTA -->
+    <section id="pantalla-carta" class="pantalla">
+        <div class="glass-card carta-card">
+            <div class="carta-header">
+                <h2>Para KL...</h2>
+                <span class="fecha">2 Meses</span>
+            </div>
+
+            <pre class="ascii-kami">
+  _  __    _    __  __ ___ 
+ | |/ /   / \  |  \/  |_ _|
+ | ' /   / _ \ | |\/| || | 
+ | . \  / ___ \| |  | || | 
+ |_|\_\/_/   \_|_|  |_|___|
+            </pre>
+
+            <div class="texto-carta">
+                <p>
+                    Buenas, quería tomarme un momento para hacerte esto porque estoy sebado y porque quiero hacer todo lo más romántico solo para vos. Estos dos meses a tu lado pasaron rapidísimo y cada segundo con vos fue y va a ser hermoso.
+                </p>
+                <p>
+                    Querida Kami: Hay muchas cosas que nos falta por hacer como pareja pero lo poco que hicimos fue muy bonito y tiene un lugar en mi corazón y lo tendrá por siempre porque sos mi primer y ojalá última novia, porque no puedo sacarte de mi cabeza, quiero hablar con vos a cada momento o por lo menos mandarte un mensaje. Puede que sea muy tonto o muy repetitivo, pero me gustas más de lo que te imaginás y no sé por qué, solo sé que no puedo decirte algunas palabras bonitas porque a diferencia de como soy con los chicos con vos tengo vergüenza y las pocas veces que puedo decírtelo en persona estoy por morir y no sé por qué. Solo sé que quiero darte todo el amor que tengo, darte toda la atención posible, todo lo que tengo y todo tipo de regalos (desde páginas web hasta que sé yo, una estatua). Sos la segunda mejor cosa que me pasó en la vida, me encanta que vos seas mi novia y que estemos juntos; que tenga que llegar tarde a casa solo para estar con vos me pone feliz, no importa si me retan o me digan cosas porque estar con vos me hace bien. Te quiero, te quise y te voy a querer. Espero que gane Estudiantes para dejar de decir que voy a otro lado solo para estar con vos 
+                </p>
+                <p class="firma">Con mucho cariño,<span>ST alias como vos me decías tu vida</span></p>
+            </div>
+
+            <button class="btn btn-si btn-siguiente" onclick="irAFinal()">Siguiente ➔</button>
+        </div>
+    </section>
+
+    <!-- PASO 3: LIRIOS DEL VALLE ROSADOS Y MENSAJE GIGANTE -->
+    <section id="pantalla-final" class="pantalla">
+        <div class="mensaje-final-box">
+            <p class="eyebrow">2 MESES A TU LADO</p>
+            <h1 class="titulo-gigante">GRACIAS POR LOS 2 MESES<br><span class="destacado">ME GUSTAS</span></h1>
+        </div>
+
+        <div class="lirios-container">
+            <svg viewBox="0 0 420 340" class="lirios-art">
+                <defs>
+                    <linearGradient id="gradTallo" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="#1b4332"/>
+                        <stop offset="100%" stop-color="#52b788"/>
+                    </linearGradient>
+                    <linearGradient id="gradFlor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="45%" stop-color="#ff8fa3"/>
+                        <stop offset="100%" stop-color="#ff4d6d"/>
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Hojas estilizadas -->
+                <path d="M200 340 C110 250, 85 120, 145 45 C168 135, 180 240, 205 340 Z" fill="#2d6a4f" opacity="0.8"/>
+                <path d="M220 340 C305 240, 325 110, 270 35 C242 125, 232 230, 212 340 Z" fill="#40916c" opacity="0.85"/>
+                <path d="M208 340 C175 240, 175 140, 205 60 C225 140, 222 240, 212 340 Z" fill="#52b788" opacity="0.5"/>
+
+                <!-- Tallos curvos -->
+                <path d="M210 340 Q180 190 260 40" stroke="url(#gradTallo)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+                <path d="M205 340 Q230 210 140 70" stroke="url(#gradTallo)" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+                <!-- Campanitas Lirio Tallo Derecho -->
+                <g filter="url(#glow)" class="campana c1">
+                    <path d="M260 40 C249 56, 241 65, 238 69 Q260 61 282 69 C279 65, 271 56, 260 40 Z" fill="url(#gradFlor)"/>
+                </g>
+                <g filter="url(#glow)" class="campana c2">
+                    <path d="M238 84 C225 102, 216 113, 212 117 Q238 108 264 117 C260 113, 251 102, 238 84 Z" fill="url(#gradFlor)"/>
+                </g>
+                <g filter="url(#glow)" class="campana c3">
+                    <path d="M220 132 C206 152, 196 163, 192 168 Q220 158 248 168 C244 163, 234 152, 220 132 Z" fill="url(#gradFlor)"/>
+                </g>
+                <g filter="url(#glow)" class="campana c4">
+                    <path d="M208 184 C193 206, 183 217, 178 223 Q208 212 238 223 C233 217, 223 206, 208 184 Z" fill="url(#gradFlor)"/>
+                </g>
+
+                <!-- Campanitas Lirio Tallo Izquierdo -->
+                <g filter="url(#glow)" class="campana c2">
+                    <path d="M140 70 C129 86, 121 95, 118 99 Q140 91 162 99 C159 95, 151 86, 140 70 Z" fill="url(#gradFlor)"/>
+                </g>
+                <g filter="url(#glow)" class="campana c3">
+                    <path d="M160 116 C147 134, 138 145, 134 149 Q160 140 186 149 C182 145, 173 134, 160 116 Z" fill="url(#gradFlor)"/>
+                </g>
+                <g filter="url(#glow)" class="campana c4">
+                    <path d="M176 168 C162 188, 152 199, 148 204 Q176 194 204 204 C200 199, 190 188, 176 168 Z" fill="url(#gradFlor)"/>
+                </g>
+            </svg>
+        </div>
+    </section>
+
+    <script>
+        // Transición limpia entre pantallas (oculta por completo la anterior antes de mostrar la nueva)
+        function cambiarPantalla(idDestino) {
+            const actual = document.querySelector('.pantalla.activa');
+            if (actual) {
+                actual.classList.add('saliendo');
+                setTimeout(() => {
+                    actual.classList.remove('activa', 'saliendo');
+                    window.scrollTo(0, 0);
+                    document.getElementById(idDestino).classList.add('activa');
+                }, 420);
+            } else {
+                document.getElementById(idDestino).classList.add('activa');
+            }
+        }
+
+        function cerrarPagina() {
+            window.close();
+            setTimeout(() => {
+                cambiarPantalla('pantalla-bloqueada');
+            }, 150);
+        }
+
+        function irAFinal() {
+            cambiarPantalla('pantalla-final');
+            modoLirios = true;
+        }
+
+        // Sistema de partículas: Pétalos de rosa en portada y destellos mágicos en el final
+        const canvas = document.getElementById('canvas-particulas');
+        const ctx = canvas.getContext('2d');
+        let modoLirios = false;
+
+        function ajustarCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', ajustarCanvas);
+        ajustarCanvas();
+
+        const particulas = Array.from({ length: 55 }, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 7 + 4,
+            speedY: Math.random() * 1.4 + 0.5,
+            speedX: (Math.random() - 0.5) * 0.9,
+            angle: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.04,
+            opacity: Math.random() * 0.65 + 0.35
+        }));
+
+        function animar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particulas.forEach(p => {
+                p.y += modoLirios ? -p.speedY * 0.8 : p.speedY;
+                p.x += Math.sin(p.angle) * 0.6 + p.speedX;
+                p.angle += p.spin;
+
+                if (!modoLirios && p.y > canvas.height + 20) {
+                    p.y = -20;
+                    p.x = Math.random() * canvas.width;
+                } else if (modoLirios && p.y < -20) {
+                    p.y = canvas.height + 20;
+                    p.x = Math.random() * canvas.width;
+                }
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                ctx.globalAlpha = p.opacity;
+
+                if (!modoLirios) {
+                    // Pétalo de rosa con degradado
+                    const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, p.size);
+                    grad.addColorStop(0, '#ff8fa3');
+                    grad.addColorStop(1, '#c9184a');
+                    ctx.fillStyle = grad;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, -p.size);
+                    ctx.bezierCurveTo(p.size * 1.2, -p.size, p.size * 1.2, p.size, 0, p.size * 1.4);
+                    ctx.bezierCurveTo(-p.size * 1.2, p.size, -p.size * 1.2, -p.size, 0, -p.size);
+                    ctx.fill();
+                } else {
+                    // Destellos / Luciérnagas rosadas brillantes
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ff758f';
+                    ctx.fillStyle = '#fff0f3';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animar);
+        }
+        animar();
+    </script>
+
+</body>
+</html>
